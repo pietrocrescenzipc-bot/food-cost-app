@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Cost Master Pro - AI Edition</title>
+    <title>Food Cost Master Pro - Ristorazione Avanzata</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -12,14 +12,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- SheetJS per importare file Excel direttamente -->
+    <!-- SheetJS (XLSX / CSV parser) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
         .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 1rem; }
         .touch-btn { min-height: 48px; min-width: 48px; display: inline-flex; align-items: center; justify-content: center; }
-        input, select { background-color: #334155; border: 1px solid #475569; color: white; min-height: 44px; font-size: 16px; }
-        input:focus, select:focus { outline: none; border-color: #f97316; }
+        input, select, textarea { background-color: #334155; border: 1px solid #475569; color: white; min-height: 44px; font-size: 16px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #f97316; }
         .active-tab { border-bottom: 4px solid #f97316; color: #f97316; font-weight: bold; }
     </style>
 </head>
@@ -31,18 +31,14 @@
             <div class="flex items-center space-x-3">
                 <i class="fa-solid fa-pizza-slice text-orange-500 text-3xl"></i>
                 <div>
-                    <h1 class="text-xl font-extrabold text-white">FoodCost<span class="text-orange-500">Master AI</span></h1>
+                    <h1 class="text-xl font-extrabold text-white">FoodCost<span class="text-orange-500">Master Pro</span></h1>
                     <p class="text-xs text-slate-400"><span id="lbl-tot-ricette">158</span> Prodotti | <span id="lbl-tot-mp">254</span> Materie Prime</p>
                 </div>
             </div>
             
             <div class="flex items-center space-x-2">
-                <label class="hidden md:flex touch-btn bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-sm font-bold shadow cursor-pointer items-center">
-                    <i class="fa-solid fa-file-excel mr-2"></i> Carica Excel
-                    <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="importaFileExcel(event)">
-                </label>
-                <button onclick="resetToExcelData()" class="hidden md:flex touch-btn bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-xl text-sm font-bold shadow">
-                    <i class="fa-solid fa-rotate-left mr-2"></i> Reset
+                <button onclick="resetToExcelData()" class="hidden md:flex touch-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow">
+                    <i class="fa-solid fa-rotate-left mr-2"></i> Ripristina Dati
                 </button>
                 <button onclick="toggleDrawer()" class="touch-btn bg-slate-800 hover:bg-slate-700 text-white rounded-xl px-4 py-2 text-2xl border border-slate-700">
                     <i class="fa-solid fa-bars"></i>
@@ -51,21 +47,24 @@
         </div>
 
         <!-- BARRA NAVIGAZIONE DESKTOP -->
-        <nav class="hidden md:flex max-w-7xl mx-auto px-4 space-x-4 border-t border-slate-800 text-sm py-2">
-            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-2 px-3 active-tab flex items-center space-x-2">
+        <nav class="hidden md:flex max-w-7xl mx-auto px-4 space-x-4 border-t border-slate-800 text-sm py-2 overflow-x-auto">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-2 px-3 active-tab flex items-center space-x-2 whitespace-nowrap">
                 <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
             </button>
-            <button onclick="switchTab('pizze')" id="tab-pizze" class="py-2 px-3 text-slate-400 hover:text-orange-400 flex items-center space-x-2">
-                <i class="fa-solid fa-utensils"></i><span>Gestione Prodotti (158)</span>
+            <button onclick="switchTab('pizze')" id="tab-pizze" class="py-2 px-3 text-slate-400 hover:text-orange-400 flex items-center space-x-2 whitespace-nowrap">
+                <i class="fa-solid fa-utensils"></i><span>Gestione Prodotti</span>
             </button>
-            <button onclick="switchTab('materie-prime')" id="tab-materie-prime" class="py-2 px-3 text-slate-400 hover:text-orange-400 flex items-center space-x-2">
-                <i class="fa-solid fa-carrot"></i><span>Materie Prime & Mercato</span>
+            <button onclick="switchTab('materie-prime')" id="tab-materie-prime" class="py-2 px-3 text-slate-400 hover:text-orange-400 flex items-center space-x-2 whitespace-nowrap">
+                <i class="fa-solid fa-carrot"></i><span>Materie Prime</span>
             </button>
-            <button onclick="switchTab('menu-engineering')" id="tab-menu-engineering" class="py-2 px-3 text-slate-400 hover:text-orange-400 flex items-center space-x-2">
+            <button onclick="switchTab('menu-engineering')" id="tab-menu-engineering" class="py-2 px-3 text-slate-400 hover:text-orange-400 flex items-center space-x-2 whitespace-nowrap">
                 <i class="fa-solid fa-chart-line"></i><span>Menu Engineering</span>
             </button>
-            <button onclick="switchTab('ai-advisor')" id="tab-ai-advisor" class="py-2 px-3 text-amber-400 hover:text-amber-300 flex items-center space-x-2 font-bold">
-                <i class="fa-solid fa-robot"></i><span>AI Advisor & Analisi</span>
+            <button onclick="switchTab('simulator')" id="tab-simulator" class="py-2 px-3 text-slate-400 hover:text-orange-400 flex items-center space-x-2 whitespace-nowrap">
+                <i class="fa-solid fa-sliders text-cyan-400"></i><span>Simulatore What-If</span>
+            </button>
+            <button onclick="switchTab('ai-advisor')" id="tab-ai-advisor" class="py-2 px-3 text-slate-400 hover:text-orange-400 flex items-center space-x-2 whitespace-nowrap">
+                <i class="fa-solid fa-wand-magic-sparkles text-orange-400"></i><span>AI Advisor</span>
             </button>
         </nav>
     </header>
@@ -82,28 +81,33 @@
             </button>
         </div>
         <div class="p-6 space-y-4 overflow-y-auto flex-grow">
-            <button onclick="switchTabMobile('dashboard')" class="w-full touch-btn bg-slate-800 text-white rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
-                <span><i class="fa-solid fa-chart-pie text-orange-500 mr-3"></i> Dashboard</span> <i class="fa-solid fa-chevron-right text-slate-500"></i>
+            <button onclick="switchTabMobile('dashboard')" class="w-full touch-btn bg-slate-800 hover:bg-slate-700 text-white rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
+                <span><i class="fa-solid fa-chart-pie text-orange-500 mr-3"></i> Dashboard & KPI</span>
+                <i class="fa-solid fa-chevron-right text-slate-500"></i>
             </button>
-            <button onclick="switchTabMobile('pizze')" class="w-full touch-btn bg-slate-800 text-white rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
-                <span><i class="fa-solid fa-utensils text-orange-500 mr-3"></i> Gestione Prodotti</span> <i class="fa-solid fa-chevron-right text-slate-500"></i>
+            <button onclick="switchTabMobile('pizze')" class="w-full touch-btn bg-slate-800 hover:bg-slate-700 text-white rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
+                <span><i class="fa-solid fa-utensils text-orange-500 mr-3"></i> Gestione Prodotti</span>
+                <i class="fa-solid fa-chevron-right text-slate-500"></i>
             </button>
-            <button onclick="switchTabMobile('materie-prime')" class="w-full touch-btn bg-slate-800 text-white rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
-                <span><i class="fa-solid fa-carrot text-orange-500 mr-3"></i> Materie Prime & Mercato</span> <i class="fa-solid fa-chevron-right text-slate-500"></i>
+            <button onclick="switchTabMobile('materie-prime')" class="w-full touch-btn bg-slate-800 hover:bg-slate-700 text-white rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
+                <span><i class="fa-solid fa-carrot text-orange-500 mr-3"></i> Materie Prime</span>
+                <i class="fa-solid fa-chevron-right text-slate-500"></i>
             </button>
-            <button onclick="switchTabMobile('menu-engineering')" class="w-full touch-btn bg-slate-800 text-white rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
-                <span><i class="fa-solid fa-chart-line text-orange-500 mr-3"></i> Menu Engineering</span> <i class="fa-solid fa-chevron-right text-slate-500"></i>
+            <button onclick="switchTabMobile('menu-engineering')" class="w-full touch-btn bg-slate-800 hover:bg-slate-700 text-white rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
+                <span><i class="fa-solid fa-chart-line text-orange-500 mr-3"></i> Menu Engineering</span>
+                <i class="fa-solid fa-chevron-right text-slate-500"></i>
             </button>
-            <button onclick="switchTabMobile('ai-advisor')" class="w-full touch-btn bg-amber-500/20 border border-amber-500 text-amber-300 rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
-                <span><i class="fa-solid fa-robot text-amber-400 mr-3"></i> AI Advisor & Analisi</span> <i class="fa-solid fa-chevron-right text-slate-500"></i>
+            <button onclick="switchTabMobile('simulator')" class="w-full touch-btn bg-slate-800 hover:bg-slate-700 text-white rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
+                <span><i class="fa-solid fa-sliders text-cyan-400 mr-3"></i> Simulatore What-If</span>
+                <i class="fa-solid fa-chevron-right text-slate-500"></i>
+            </button>
+            <button onclick="switchTabMobile('ai-advisor')" class="w-full touch-btn bg-slate-800 hover:bg-slate-700 text-white rounded-xl p-4 text-left font-bold text-lg flex items-center justify-between">
+                <span><i class="fa-solid fa-wand-magic-sparkles text-orange-400 mr-3"></i> AI Advisor</span>
+                <i class="fa-solid fa-chevron-right text-slate-500"></i>
             </button>
             <hr class="border-slate-800 my-4">
-            <label class="w-full touch-btn bg-emerald-600 text-white rounded-xl p-4 font-bold text-base flex items-center justify-center cursor-pointer mb-3">
-                <i class="fa-solid fa-file-excel mr-2"></i> Carica file Excel
-                <input type="file" accept=".xlsx, .xls, .csv" class="hidden" onchange="importaFileExcel(event); toggleDrawer();">
-            </label>
             <button onclick="resetToExcelData(); toggleDrawer();" class="w-full touch-btn bg-red-600/30 border border-red-500 text-red-400 rounded-xl p-4 font-bold text-base flex items-center justify-center">
-                <i class="fa-solid fa-rotate-left mr-2"></i> Ripristina Dati Originali
+                <i class="fa-solid fa-rotate-left mr-2"></i> Ripristina Database
             </button>
         </div>
     </div>
@@ -111,24 +115,24 @@
     <!-- CONTENUTO PRINCIPALE -->
     <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
 
-        <!-- 1. DASHBOARD -->
+        <!-- 1. DASHBOARD E KPI FINANZIARI -->
         <section id="sec-dashboard" class="space-y-6">
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="card p-4">
-                    <p class="text-slate-400 text-xs font-semibold uppercase">Prodotti in Menù</p>
-                    <h3 id="dash-tot-pizze" class="text-3xl font-extrabold text-white mt-1">158</h3>
+                    <p class="text-slate-400 text-xs font-semibold uppercase">Fatturato Mensile Previsto</p>
+                    <h3 id="dash-tot-fatturato" class="text-2xl font-extrabold text-white mt-1">€ 0.00</h3>
                 </div>
                 <div class="card p-4">
-                    <p class="text-slate-400 text-xs font-semibold uppercase">Food Cost Medio %</p>
-                    <h3 id="dash-fc-medio" class="text-3xl font-extrabold text-emerald-400 mt-1">0%</h3>
+                    <p class="text-slate-400 text-xs font-semibold uppercase">Costo Materie Prime</p>
+                    <h3 id="dash-tot-costo-mp" class="text-2xl font-extrabold text-rose-400 mt-1">€ 0.00</h3>
                 </div>
                 <div class="card p-4">
-                    <p class="text-slate-400 text-xs font-semibold uppercase">Margine Medio / Prodotto</p>
-                    <h3 id="dash-margine-medio" class="text-3xl font-extrabold text-blue-400 mt-1">€ 0.00</h3>
+                    <p class="text-slate-400 text-xs font-semibold uppercase">Profitto Lordo Mensile</p>
+                    <h3 id="dash-tot-profitto" class="text-2xl font-extrabold text-emerald-400 mt-1">€ 0.00</h3>
                 </div>
                 <div class="card p-4">
-                    <p class="text-slate-400 text-xs font-semibold uppercase">Prodotti "STAR"</p>
-                    <h3 id="dash-star-count" class="text-3xl font-extrabold text-amber-400 mt-1">0</h3>
+                    <p class="text-slate-400 text-xs font-semibold uppercase">Food Cost Ponderato %</p>
+                    <h3 id="dash-fc-ponderato" class="text-2xl font-extrabold text-amber-400 mt-1">0%</h3>
                 </div>
             </div>
 
@@ -137,42 +141,72 @@
                     <h3 class="text-base font-bold text-white mb-4 flex items-center">
                         <i class="fa-solid fa-chart-column text-orange-500 mr-2"></i> Matrice Menu Engineering
                     </h3>
-                    <div class="h-64 relative"><canvas id="chartMatrix"></canvas></div>
+                    <div class="h-64 relative">
+                        <canvas id="chartMatrix"></canvas>
+                    </div>
                 </div>
                 <div class="card p-5">
                     <h3 class="text-base font-bold text-white mb-4 flex items-center">
                         <i class="fa-solid fa-pie-chart text-emerald-500 mr-2"></i> Top 5 Prodotti per Food Cost (€)
                     </h3>
-                    <div class="h-64 relative"><canvas id="chartFoodCost"></canvas></div>
+                    <div class="h-64 relative">
+                        <canvas id="chartFoodCost"></canvas>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- 2. GESTIONE PRODOTTI -->
+        <!-- 2. GESTIONE PRODOTTI & SCHEDA RICETTA -->
         <section id="sec-pizze" class="hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- PANNELLO SELEZIONE -->
                 <div class="card p-5 lg:col-span-1 space-y-4">
                     <h2 class="text-lg font-bold text-white">Seleziona Prodotto</h2>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Cerca tra i 158 prodotti del menù:</label>
+                        <label class="block text-xs text-slate-400 mb-1">Cerca tra i prodotti del menù:</label>
                         <select id="select-pizza" onchange="caricaRicettaPizza(this.value)" class="w-full rounded-xl p-3 font-semibold text-white"></select>
                     </div>
-                    <button onclick="modalNuovaPizza()" class="w-full touch-btn bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow">
-                        <i class="fa-solid fa-plus mr-2"></i> Crea Nuovo Prodotto
-                    </button>
+                    <div class="flex space-x-2">
+                        <button onclick="modalNuovaPizza()" class="flex-1 touch-btn bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow text-sm">
+                            <i class="fa-solid fa-plus mr-1"></i> Nuovo
+                        </button>
+                        <button onclick="modalImportazioneMassivaVendite()" class="flex-1 touch-btn bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow text-sm" title="Carica file o imposta volumi">
+                            <i class="fa-solid fa-file-excel mr-1"></i> Gestisci Volumi
+                        </button>
+                    </div>
                     
                     <div id="pizza-summary-card" class="bg-slate-900 p-4 rounded-xl space-y-3 border border-slate-800">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-extrabold text-orange-400 text-lg" id="summary-pizza-nome">Nome Prodotto</h3>
-                            <button onclick="modalEditPrezzoPizza()" class="touch-btn bg-slate-800 text-xs text-white px-3 py-1 rounded-lg border border-slate-700"><i class="fa-solid fa-pen mr-1"></i> Prezzo</button>
+                            <h3 class="font-extrabold text-orange-400 text-base" id="summary-pizza-nome">Nome Prodotto</h3>
+                            <div class="flex space-x-1">
+                                <button onclick="modalEditPrezzoPizza()" class="touch-btn bg-slate-800 text-xs text-white px-2 py-1 rounded-lg border border-slate-700" title="Modifica Prezzo"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="modalEditVenditePizza()" class="touch-btn bg-slate-800 text-xs text-amber-400 px-2 py-1 rounded-lg border border-slate-700" title="Modifica Vendite Mensili"><i class="fa-solid fa-chart-simple"></i></button>
+                            </div>
                         </div>
-                        <div class="flex justify-between text-sm"><span class="text-slate-400">Prezzo Vendita:</span><span class="font-bold text-white" id="summary-pizza-prezzo">€ 0.00</span></div>
-                        <div class="flex justify-between text-sm"><span class="text-slate-400">Costo Ingredienti:</span><span class="font-bold text-rose-400" id="summary-pizza-costo">€ 0.00</span></div>
-                        <div class="flex justify-between text-sm"><span class="text-slate-400">Margine Lordo:</span><span class="font-bold text-emerald-400" id="summary-pizza-margine">€ 0.00</span></div>
-                        <div class="flex justify-between text-sm"><span class="text-slate-400">Food Cost %:</span><span class="font-bold text-amber-400" id="summary-pizza-fc">0%</span></div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Prezzo Vendita:</span>
+                            <span class="font-bold text-white" id="summary-pizza-prezzo">€ 0.00</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Vendite Mensili:</span>
+                            <span class="font-bold text-amber-400" id="summary-pizza-vendite">0 pz/mese</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Costo Ingredienti:</span>
+                            <span class="font-bold text-rose-400" id="summary-pizza-costo">€ 0.00</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Margine Lordo:</span>
+                            <span class="font-bold text-emerald-400" id="summary-pizza-margine">€ 0.00</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Food Cost %:</span>
+                            <span class="font-bold text-amber-400" id="summary-pizza-fc">0%</span>
+                        </div>
                     </div>
                 </div>
 
+                <!-- TABELLA SCHEDA RICETTA MODIFICABILE -->
                 <div class="card p-5 lg:col-span-2 space-y-4">
                     <div class="flex justify-between items-center">
                         <h2 class="text-lg font-bold text-white">Scheda Ricetta Interattiva</h2>
@@ -215,13 +249,13 @@
             </div>
         </section>
 
-        <!-- 3. MATERIE PRIME E CONFRONTO MERCATO -->
+        <!-- 3. MATERIE PRIME -->
         <section id="sec-materie-prime" class="hidden space-y-6">
             <div class="card p-5">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
-                        <h2 class="text-xl font-bold text-white">Anagrafica Materie Prime & Prezzi Mercato (254)</h2>
-                        <p class="text-sm text-slate-400">Confronto istantaneo tra il tuo costo e il prezzo medio stimato dei fornitori/supermercato.</p>
+                        <h2 class="text-xl font-bold text-white">Anagrafica Materie Prime</h2>
+                        <p class="text-sm text-slate-400">Gestisci i costi unitari di tutti gli ingredienti.</p>
                     </div>
                     <button onclick="modalNuovaMateriaPrima()" class="touch-btn bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold shadow">
                         <i class="fa-solid fa-plus mr-2"></i> Nuova Materia Prima
@@ -233,9 +267,7 @@
                             <tr>
                                 <th class="p-3">Ingrediente</th>
                                 <th class="p-3">Unità</th>
-                                <th class="p-3">Tuo Costo Unitario</th>
-                                <th class="p-3">Prezzo Medio Mercato</th>
-                                <th class="p-3">Stato / Differenza</th>
+                                <th class="p-3">Costo Unitario (€)</th>
                                 <th class="p-3 text-center">Azioni</th>
                             </tr>
                         </thead>
@@ -248,14 +280,22 @@
         <!-- 4. MENU ENGINEERING -->
         <section id="sec-menu-engineering" class="hidden space-y-6">
             <div class="card p-5">
-                <h2 class="text-xl font-bold text-white mb-2">Matrice di Menu Engineering</h2>
-                <p class="text-sm text-slate-400 mb-6">Classificazione automatica su tutti i 158 prodotti del menù.</p>
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Matrice di Menu Engineering</h2>
+                        <p class="text-sm text-slate-400">Classificazione basata su margini e volumi di vendita mensili.</p>
+                    </div>
+                    <button onclick="modalImportazioneMassivaVendite()" class="touch-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> Gestione Volumi
+                    </button>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm text-slate-300">
                         <thead class="bg-slate-800 text-slate-400 uppercase text-xs">
                             <tr>
                                 <th class="p-3">Prodotto</th>
                                 <th class="p-3">Prezzo (€)</th>
+                                <th class="p-3">Vendite (Pz/Mese)</th>
                                 <th class="p-3">Food Cost (€)</th>
                                 <th class="p-3">Margine (€)</th>
                                 <th class="p-3">FC %</th>
@@ -269,43 +309,80 @@
             </div>
         </section>
 
-        <!-- 5. INTELLIGENZA ARTIFICIALE / AI ADVISOR -->
-        <section id="sec-ai-advisor" class="hidden space-y-6">
-            <div class="card p-6 border border-amber-500/30 bg-gradient-to-br from-slate-900 to-slate-900/90">
-                <div class="flex items-center space-x-3 mb-6">
-                    <div class="p-3 bg-amber-500/20 text-amber-400 rounded-xl text-2xl">
-                        <i class="fa-solid fa-robot"></i>
+        <!-- 5. SIMULATORE WHAT-IF -->
+        <section id="sec-simulator" class="hidden space-y-6">
+            <div class="card p-6 border-cyan-500/30 space-y-6">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-cyan-500/20 p-3 rounded-xl text-cyan-400 text-2xl">
+                        <i class="fa-solid fa-sliders"></i>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-white">FoodCost AI Advisor</h2>
-                        <p class="text-sm text-slate-400">Analisi avanzata e raccomandazioni automatiche sul tuo listino.</p>
+                        <h2 class="text-xl font-bold text-white">Simulatore What-If (Variazione Prezzi e Costi)</h2>
+                        <p class="text-sm text-slate-400">Simula in tempo reale l'impatto sul tuo fatturato e margine complessivo.</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                        <p class="text-xs text-slate-400 uppercase font-semibold">Prodotti Critici (>40% FC)</p>
-                        <h3 id="ai-critici-count" class="text-2xl font-extrabold text-rose-400 mt-1">0</h3>
-                        <p class="text-xs text-slate-400 mt-2">Richiedono aumento prezzo o ricalcolo dosi.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-900 p-5 rounded-xl border border-slate-800">
+                    <div class="space-y-4">
+                        <label class="block text-sm font-bold text-slate-200">Variazione Prezzi di Vendita (%):</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="range" id="sim-prezzo-range" min="-20" max="30" value="0" step="1" class="w-full accent-cyan-500" oninput="eseguiSimulazione()">
+                            <span id="sim-prezzo-val" class="font-extrabold text-cyan-400 w-16 text-right">0%</span>
+                        </div>
+                        <p class="text-xs text-slate-400">Simula l'aumento o la riduzione trasversale dei prezzi di vendita di tutti i prodotti.</p>
                     </div>
-                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                        <p class="text-xs text-slate-400 uppercase font-semibold">Margine Massimo Ottenibile</p>
-                        <h3 id="ai-margine-ottimale" class="text-2xl font-extrabold text-emerald-400 mt-1">€ 0.00</h3>
-                        <p class="text-xs text-slate-400 mt-2">Stima basata sui volumi di vendita attuali.</p>
-                    </div>
-                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                        <p class="text-xs text-slate-400 uppercase font-semibold">Stato Ottimizzazione</p>
-                        <h3 id="ai-stato-salute" class="text-2xl font-extrabold text-blue-400 mt-1">Ottimale</h3>
-                        <p class="text-xs text-slate-400 mt-2">Valutazione basata su 158 ricette attive.</p>
+
+                    <div class="space-y-4">
+                        <label class="block text-sm font-bold text-slate-200">Variazione Costo Materie Prime (%):</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="range" id="sim-mp-range" min="-20" max="50" value="0" step="1" class="w-full accent-rose-500" oninput="eseguiSimulazione()">
+                            <span id="sim-mp-val" class="font-extrabold text-rose-400 w-16 text-right">0%</span>
+                        </div>
+                        <p class="text-xs text-slate-400">Simula rincari o ribassi dei fornitori sulle materie prime.</p>
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    <h3 class="font-bold text-white text-base flex items-center">
-                        <i class="fa-solid fa-lightbulb text-amber-400 mr-2"></i> Suggerimenti Strategici Generati dall'IA:
-                    </h3>
-                    <div id="ai-recommendations-list" class="space-y-3">
-                        <!-- Generato dinamicamente via JS -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+                        <p class="text-xs text-slate-400 uppercase">Fatturato Simulato</p>
+                        <h3 id="sim-res-fatturato" class="text-xl font-extrabold text-white mt-1">€ 0.00</h3>
+                        <span id="sim-diff-fatturato" class="text-xs text-slate-400"></span>
+                    </div>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+                        <p class="text-xs text-slate-400 uppercase">Costo MP Simulato</p>
+                        <h3 id="sim-res-costo" class="text-xl font-extrabold text-rose-400 mt-1">€ 0.00</h3>
+                        <span id="sim-diff-costo" class="text-xs text-slate-400"></span>
+                    </div>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+                        <p class="text-xs text-slate-400 uppercase">Profitto Lordo Simulato</p>
+                        <h3 id="sim-res-profitto" class="text-xl font-extrabold text-emerald-400 mt-1">€ 0.00</h3>
+                        <span id="sim-diff-profitto" class="text-xs text-slate-400"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. AI ADVISOR POTENZIATO -->
+        <section id="sec-ai-advisor" class="hidden space-y-6">
+            <div class="card p-6 border-orange-500/30">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="bg-orange-500/20 p-3 rounded-xl text-orange-400 text-2xl">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-white">AI Menu & Food Cost Advisor Potenziato</h2>
+                        <p class="text-sm text-slate-400">Analisi automatica intelligente basata su volumi reali, margini e fabbisogno acquisti.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <button onclick="generaConsigliAI()" class="touch-btn bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg w-full sm:w-auto">
+                        <i class="fa-solid fa-microchip mr-2"></i> Avvia Analisi AI & Genera Lista Spesa
+                    </button>
+                    
+                    <div id="ai-output-container" class="hidden space-y-4 pt-4 border-t border-slate-800">
+                        <h3 class="font-bold text-orange-400 text-base"><i class="fa-solid fa-clipboard-list mr-2"></i> Report Strategico & Fabbisogno:</h3>
+                        <div id="ai-report-content" class="text-sm text-slate-300 space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800/80 leading-relaxed"></div>
                     </div>
                 </div>
             </div>
@@ -313,7 +390,7 @@
 
     </main>
 
-    <!-- SCRIPT JAVASCRIPT INTEGRATO -->
+    <!-- SCRIPT LOGICA COMPLETA -->
     <script>
         const defaultMateriePrime = [{"id": 1, "nome": "acciughe", "unita": "gr", "costo": 14.0}, {"id": 2, "nome": "aglio", "unita": "gr", "costo": 3.6}, {"id": 3, "nome": "alette pollo", "unita": "pezzi", "costo": 0.36}, {"id": 4, "nome": "AMARO CAPO CL.70", "unita": "ml", "costo": 0.0171}, {"id": 5, "nome": "ANANAS", "unita": "gr", "costo": 2.5}, {"id": 6, "nome": "ANDUJA", "unita": "gr", "costo": 11.7}, {"id": 7, "nome": "APEROL LT.1", "unita": "ml", "costo": 0.0129}, {"id": 8, "nome": "AVERNA CL 70", "unita": "ml", "costo": 0.0194}, {"id": 9, "nome": "BANANE", "unita": "gr", "costo": 2.0}, {"id": 10, "nome": "BAP 4 LUPPOLI", "unita": "ml", "costo": 0.0025}, {"id": 11, "nome": "BASE PIZZA CELIACO", "unita": "gr", "costo": 3.03}, {"id": 12, "nome": "BRANCAMENTA LT.1", "unita": "ml", "costo": 0.0196}, {"id": 13, "nome": "bresaola", "unita": "gr", "costo": 22.898}, {"id": 14, "nome": "bruschette", "unita": "pezzi", "costo": 0.3}, {"id": 15, "nome": "bufala", "unita": "gr", "costo": 13.5}, {"id": 16, "nome": "burrata", "unita": "gr", "costo": 7.0}, {"id": 17, "nome": "burro", "unita": "gr", "costo": 11.52}, {"id": 18, "nome": "bustine salse", "unita": "pezzi", "costo": 0.058}, {"id": 19, "nome": "CACIOTTA", "unita": "gr", "costo": 12.1}, {"id": 20, "nome": "CAFFE'", "unita": "gr", "costo": 8.93}, {"id": 21, "nome": "CAFFE' HAG GR. 6,5", "unita": "pezzi", "costo": 0.0}, {"id": 22, "nome": "CAMOARI SODA ML100", "unita": "gr", "costo": 0.0}, {"id": 23, "nome": "CAPOCOLLO", "unita": "gr", "costo": 12.707}, {"id": 24, "nome": "capperi", "unita": "gr", "costo": 5.7}, {"id": 25, "nome": "CARCIOFI", "unita": "gr", "costo": 7.1}, {"id": 26, "nome": "CARLSBERG", "unita": "ml", "costo": 3.7}, {"id": 27, "nome": "CAROTE", "unita": "gr", "costo": 2.6}, {"id": 28, "nome": "CHELE GRANCHIO", "unita": "pezzi", "costo": 0.17}, {"id": 29, "nome": "chianina paoletti", "unita": "gr", "costo": 12.5}, {"id": 30, "nome": "CILIEGINO", "unita": "gr", "costo": 3.8}, {"id": 31, "nome": "cioccolato fondente", "unita": "gr", "costo": 11.5}, {"id": 32, "nome": "ciotole salse", "unita": "pezzi", "costo": 0.02}, {"id": 33, "nome": "cipolla", "unita": "gr", "costo": 2.5}, {"id": 34, "nome": "CIPOLLE ANELLI", "unita": "gr", "costo": 4.1}, {"id": 35, "nome": "COCA BOTT.0,33", "unita": "pezzi", "costo": 0.76}, {"id": 36, "nome": "COCA PREMIX", "unita": "ml", "costo": 2.6}, {"id": 37, "nome": "COCA ZERO BOT. 0,33", "unita": "pezzi", "costo": 0.76}, {"id": 38, "nome": "CONTORNO FOGLIE VERDI GR. 1000", "unita": "gr", "costo": 2.5}, {"id": 39, "nome": "COSCIA SUINO", "unita": "gr", "costo": 10.92}, {"id": 40, "nome": "cotoletta milanese", "unita": "gr", "costo": 8.3}, {"id": 41, "nome": "cotolette di pollo 100gr", "unita": "gr", "costo": 4.5}, {"id": 42, "nome": "CREMA CATALANA", "unita": "gr", "costo": 0.0}, {"id": 43, "nome": "crema di zucca", "unita": "gr", "costo": 12.0}, {"id": 44, "nome": "crema n duja", "unita": "gr", "costo": 11.7}, {"id": 45, "nome": "CREMA PISTACCHIO", "unita": "gr", "costo": 12.28}, {"id": 46, "nome": "CREMA QUATTRO", "unita": "gr", "costo": 10.6}, {"id": 47, "nome": "CREMA TIRAMISU", "unita": "gr", "costo": 0.0}, {"id": 48, "nome": "CREMA W. LT.1", "unita": "gr", "costo": 0.0}, {"id": 49, "nome": "CREPS 55 GR. *5 PX", "unita": "pezzi", "costo": 0.93}, {"id": 50, "nome": "croccante", "unita": "gr", "costo": 46.0}, {"id": 51, "nome": "CROCCHETTE PATATE", "unita": "pezzi", "costo": 0.06}, {"id": 52, "nome": "CROCCHETTE POLLO BIRBE GR. 700", "unita": "pezzi", "costo": 0.11}, {"id": 53, "nome": "dolce compleanno", "unita": "gr", "costo": 15.0}, {"id": 54, "nome": "ESTA THE LAT. 0,33", "unita": "ml", "costo": 1.15}, {"id": 55, "nome": "FANTA LAT. 0,33", "unita": "pezzi", "costo": 0.98}, {"id": 56, "nome": "farina 00", "unita": "gr", "costo": 1.26}, {"id": 57, "nome": "FETTINE PETTO POLLO 130gr", "unita": "gr", "costo": 8.5}, {"id": 58, "nome": "FILETTI ACCIUGHE GR, 720", "unita": "gr", "costo": 14.0}, {"id": 59, "nome": "FIORI ZUCCA 1500 GR", "unita": "pezzi", "costo": 0.4}, {"id": 60, "nome": "FRAGOLE ?", "unita": "gr", "costo": 0.0}, {"id": 61, "nome": "FRITTO MISTO PASTELLATO GR. 2500", "unita": "gr", "costo": 16.61}, {"id": 62, "nome": "FRUTTA MISTA", "unita": "gr", "costo": 2.8}, {"id": 63, "nome": "Frutti BOSCO 1000 gr", "unita": "gr", "costo": 0.0}, {"id": 64, "nome": "funghi", "unita": "gr", "costo": 4.0}, {"id": 65, "nome": "FUNGHI PORCINI", "unita": "gr", "costo": 13.8}, {"id": 66, "nome": "gamberetti", "unita": "gr", "costo": 12.8}, {"id": 67, "nome": "gelatina", "unita": "pezzi", "costo": 0.3}, {"id": 68, "nome": "gelato sfuso", "unita": "gr", "costo": 18.5}, {"id": 69, "nome": "GELATO TARTUFO NERO", "unita": "pezzi", "costo": 1.2}, {"id": 70, "nome": "GIN BOSFORD CL. 70", "unita": "ml", "costo": 0.0171}, {"id": 71, "nome": "gorgonzola", "unita": "gr", "costo": 10.96}, {"id": 72, "nome": "GRAN MIX", "unita": "gr", "costo": 11.5}, {"id": 73, "nome": "GRAN MIX 3", "unita": "gr", "costo": 0.0}, {"id": 74, "nome": "GRAN MIX TREVALLI KG.1", "unita": "gr", "costo": 10.24}, {"id": 75, "nome": "grana", "unita": "gr", "costo": 14.1}, {"id": 76, "nome": "granella pistacchio", "unita": "gr", "costo": 19.5}, {"id": 77, "nome": "GRAPPA 903 0,70", "unita": "gr", "costo": 0.0}, {"id": 78, "nome": "GRAPPA PINOT CL 50", "unita": "gr", "costo": 0.0}, {"id": 79, "nome": "GRIMBERGER", "unita": "ml", "costo": 4.71}, {"id": 80, "nome": "hamburger angus 220", "unita": "gr", "costo": 11.6}, {"id": 81, "nome": "HAMBURGER FASSONA", "unita": "gr", "costo": 10.87}, {"id": 82, "nome": "hamburger manzo", "unita": "gr", "costo": 7.7}, {"id": 83, "nome": "hamburger pollo", "unita": "gr", "costo": 6.9}, {"id": 84, "nome": "hamburger scottona 220", "unita": "gr", "costo": 10.48}, {"id": 85, "nome": "impasto", "unita": "pezi", "costo": 0.18}, {"id": 86, "nome": "JALAPENO", "unita": "pezzi", "costo": 0.43}, {"id": 87, "nome": "JEGHERMASTER LT.1", "unita": "ml", "costo": 0.0214}, {"id": 88, "nome": "KETCHUP MONO", "unita": "pezzi", "costo": 0.12}, {"id": 89, "nome": "KETCHUP RIGHETTI", "unita": "gr", "costo": 12.2}, {"id": 90, "nome": "KIWI", "unita": "gr", "costo": 3.9}, {"id": 91, "nome": "LARDO DI SUINO", "unita": "gr", "costo": 9.44}, {"id": 92, "nome": "latte", "unita": "ml", "costo": 1.8}, {"id": 93, "nome": "LATTUGA", "unita": "gr", "costo": 2.8}, {"id": 94, "nome": "lievito", "unita": "gr", "costo": 3.6}, {"id": 95, "nome": "lievito pizzaiolo 45 gr bustina", "unita": "pezzi", "costo": 0.413}, {"id": 96, "nome": "LIMONCELLO LT.I", "unita": "ml", "costo": 14.53}, {"id": 97, "nome": "LIMONE RIPIENO SOEBETTO GR. 90", "unita": "gr", "costo": 0.0}, {"id": 98, "nome": "LIMONI", "unita": "gr", "costo": 2.8}, {"id": 99, "nome": "MAIONESE MONO", "unita": "pezzi", "costo": 0.12}, {"id": 100, "nome": "MAIONESE RIGHETTI", "unita": "gr", "costo": 14.41}, {"id": 101, "nome": "mais", "unita": "gr", "costo": 6.0}, {"id": 102, "nome": "MELANZANE", "unita": "gr", "costo": 2.0}, {"id": 103, "nome": "MILANESE", "unita": "gr", "costo": 9.1}, {"id": 104, "nome": "MONTENEGRO CL.150", "unita": "ml", "costo": 0.0215}, {"id": 105, "nome": "mortadella", "unita": "gr", "costo": 7.6}, {"id": 106, "nome": "mozzarella", "unita": "gr", "costo": 8.87}, {"id": 107, "nome": "MOZZARELLA BUFALA", "unita": "gr", "costo": 13.5}, {"id": 108, "nome": "mozzarella fresca", "unita": "gr", "costo": 7.75}, {"id": 109, "nome": "MOZZARELLA LATTOSIO", "unita": "gr", "costo": 11.88}, {"id": 110, "nome": "mozzarelline fritte", "unita": "pezzi", "costo": 0.08}, {"id": 111, "nome": "noci", "unita": "gr", "costo": 17.0}, {"id": 112, "nome": "nutella", "unita": "gr", "costo": 24.0}, {"id": 113, "nome": "OLIO ESTRA 5 L", "unita": "ml", "costo": 27.3}, {"id": 114, "nome": "OLIO GIRASOLE LT. 5", "unita": "ml", "costo": 7.26}, {"id": 115, "nome": "OLIO PALMA LT. 25", "unita": "ml", "costo": 0.0423}, {"id": 116, "nome": "olive", "unita": "gr", "costo": 13.0}, {"id": 117, "nome": "OLIVE ASCOLANA", "unita": "pezzi", "costo": 0.08}, {"id": 118, "nome": "ORIGANO 200 GR.", "unita": "gr", "costo": 1.86}, {"id": 119, "nome": "ORZO", "unita": "gr", "costo": 0.0}, {"id": 120, "nome": "pachino", "unita": "gr", "costo": 3.8}, {"id": 121, "nome": "pancetta", "unita": "gr", "costo": 11.83}, {"id": 122, "nome": "pane ciabatta", "unita": "pezzi", "costo": 0.58}, {"id": 123, "nome": "PANE GRATTUGIATO GR, 500", "unita": "gr", "costo": 1.31}, {"id": 124, "nome": "pane hamburger", "unita": "pezzi", "costo": 0.2}, {"id": 125, "nome": "PANINI PRETAGLIATI CIABATTINA", "unita": "pezzi", "costo": 0.58}, {"id": 126, "nome": "panna cotta preparato", "unita": "pezzi", "costo": 9.4}, {"id": 127, "nome": "panna da montare", "unita": "ml", "costo": 9.32}, {"id": 128, "nome": "PANNA FRESCA 100ML.", "unita": "gr", "costo": 9.32}, {"id": 129, "nome": "PANNA FRESCA 200ML.", "unita": "gr", "costo": 0.0}, {"id": 130, "nome": "PANNA SPRAY GR. 500", "unita": "gr", "costo": 6.93}, {"id": 131, "nome": "PASTA SALSICCE KG. 1", "unita": "gr", "costo": 6.08}, {"id": 132, "nome": "pastellate", "unita": "gr", "costo": 15.0}, {"id": 133, "nome": "PATATE CHIPS", "unita": "gr", "costo": 3.1}, {"id": 134, "nome": "patate fritte", "unita": "gr", "costo": 4.78}, {"id": 135, "nome": "patate lesse", "unita": "gr", "costo": 1.2}, {"id": 136, "nome": "patate scavate dippers", "unita": "gr", "costo": 2.6}, {"id": 137, "nome": "PATE' DI FEGATO", "unita": "gr", "costo": 7.26}, {"id": 138, "nome": "pecorino", "unita": "gr", "costo": 16.61}, {"id": 139, "nome": "peperoni", "unita": "gr", "costo": 3.95}, {"id": 140, "nome": "PERA", "unita": "gr", "costo": 4.5}, {"id": 141, "nome": "philadelphia", "unita": "gr", "costo": 14.2}, {"id": 142, "nome": "piadina impasto", "unita": "pezzi", "costo": 0.63}, {"id": 143, "nome": "pomodori secchi", "unita": "gr", "costo": 7.0}, {"id": 144, "nome": "pomodoro", "unita": "gr", "costo": 1.31}, {"id": 145, "nome": "POMODORO POLPA PIZZA G. 4050 *3", "unita": "gr", "costo": 1.31}, {"id": 146, "nome": "POMODORO VERDE", "unita": "gr", "costo": 2.5}, {"id": 147, "nome": "poretti 4 luppoli", "unita": "pezi", "costo": 1.2}, {"id": 148, "nome": "porcini", "unita": "gr", "costo": 12.0}, {"id": 149, "nome": "PREZZEMOLO A MAZZI PX.", "unita": "gr", "costo": 0.0}, {"id": 150, "nome": "prosciutto cotto", "unita": "gr", "costo": 8.47}, {"id": 151, "nome": "prosciutto crudo", "unita": "gr", "costo": 10.92}, {"id": 152, "nome": "provola", "unita": "gr", "costo": 12.24}, {"id": 153, "nome": "radicchio", "unita": "gr", "costo": 3.5}, {"id": 154, "nome": "REFOSCO 0,375", "unita": "pezzi", "costo": 3.05}, {"id": 155, "nome": "REFOSCO 0,75", "unita": "pezzi", "costo": 4.35}, {"id": 156, "nome": "RIBOLLA 0,375", "unita": "pezzi", "costo": 3.05}, {"id": 157, "nome": "RIBOLLA 0,75", "unita": "pezzi", "costo": 4.35}, {"id": 158, "nome": "roll piccanti", "unita": "pezzi", "costo": 0.3}, {"id": 159, "nome": "rucola", "unita": "gr", "costo": 0.7}, {"id": 160, "nome": "RUM PAMPERO 70", "unita": "cl", "costo": 0.015}, {"id": 161, "nome": "salame piccante", "unita": "gr", "costo": 8.8}, {"id": 162, "nome": "SALAME TOSCANO", "unita": "gr", "costo": 9.152}, {"id": 163, "nome": "salmone", "unita": "gr", "costo": 26.0}, {"id": 164, "nome": "salsa 4 formaggi", "unita": "gr", "costo": 11.66}, {"id": 165, "nome": "SALSA BARBECUE", "unita": "gr", "costo": 4.39}, {"id": 166, "nome": "SALSA BECONAISE", "unita": "gr", "costo": 5.68}, {"id": 167, "nome": "SALSA CEDDAR", "unita": "gr", "costo": 12.0}, {"id": 168, "nome": "salsa harissa", "unita": "gr", "costo": 6.0}, {"id": 169, "nome": "SALSA HARISSA", "unita": "gr", "costo": 6.0}, {"id": 170, "nome": "SALSA TARTUFATA", "unita": "gr", "costo": 20.0}, {"id": 171, "nome": "SALSICCE STAGIONATE", "unita": "gr", "costo": 15.02}, {"id": 172, "nome": "salsiccia", "unita": "gr", "costo": 6.0}, {"id": 173, "nome": "SAMBUCA MOLINARI CL. 150", "unita": "ml", "costo": 0.02}, {"id": 174, "nome": "SAUVIGNON 0,375", "unita": "pezzi", "costo": 3.05}, {"id": 175, "nome": "SAUVIGNON 0,75", "unita": "pezzi", "costo": 4.35}, {"id": 176, "nome": "savoiardi", "unita": "pezzi", "costo": 0.055}, {"id": 177, "nome": "scamorza affumicata", "unita": "gr", "costo": 13.0}, {"id": 178, "nome": "sella", "unita": "gr", "costo": 11.78}, {"id": 179, "nome": "SEMOLA RIMACINATA KG. 25", "unita": "gr", "costo": 0.0}, {"id": 180, "nome": "SESAMO 1 kg", "unita": "gr", "costo": 5.67}, {"id": 181, "nome": "SPECIAL", "unita": "ml", "costo": 4.9}, {"id": 182, "nome": "speck", "unita": "gr", "costo": 11.2}, {"id": 183, "nome": "spite", "unita": "pezzi", "costo": 0.9}, {"id": 184, "nome": "stracchino", "unita": "gr", "costo": 10.7}, {"id": 185, "nome": "STRACCIATELLA", "unita": "gr", "costo": 2.2}, {"id": 186, "nome": "SUPPLI DI RISO", "unita": "gr", "costo": 5.2}, {"id": 187, "nome": "tacchino", "unita": "gr", "costo": 8.4}, {"id": 188, "nome": "tartufo", "unita": "gr", "costo": 17.93}, {"id": 189, "nome": "TENNENTS", "unita": "pezzi", "costo": 1.33}, {"id": 190, "nome": "the lim/pesca", "unita": "pezzi", "costo": 1.15}, {"id": 191, "nome": "THUCHER", "unita": "ml", "costo": 4.34}, {"id": 192, "nome": "TIRAMISU GR 490", "unita": "pezzi", "costo": 1.75}, {"id": 193, "nome": "tonno", "unita": "gr", "costo": 20.0}, {"id": 194, "nome": "TOPPING FB", "unita": "gr", "costo": 7.29}, {"id": 195, "nome": "torta 1/4", "unita": "pezzi", "costo": 0.26}, {"id": 196, "nome": "TRAMEZZINO CLASSICO 10 F. GR. 980", "unita": "gr", "costo": 0.0}, {"id": 197, "nome": "TRAMINER 0,375", "unita": "pezzzi", "costo": 3.05}, {"id": 198, "nome": "TRAMINER 0,75", "unita": "pezzi", "costo": 4.35}, {"id": 199, "nome": "TULLIA FRI. 0,50 LIT.", "unita": "pezzi", "costo": 0.41}, {"id": 200, "nome": "TULLIA FRI. 1 LIT.", "unita": "pezzi", "costo": 0.54}, {"id": 201, "nome": "TULLIA NAT 1 LT.", "unita": "pezzi", "costo": 0.42}, {"id": 202, "nome": "TULLIA NAT. 0,50 LIT.", "unita": "pezzi", "costo": 0.41}, {"id": 203, "nome": "UNICUM", "unita": "cl", "costo": 0.02}, {"id": 204, "nome": "uova", "unita": "pezzi", "costo": 0.16}, {"id": 205, "nome": "verdure fresche", "unita": "gr", "costo": 0.0}, {"id": 206, "nome": "verdure grigliate", "unita": "gr", "costo": 0.0}, {"id": 207, "nome": "verdure pastellate", "unita": "gr", "costo": 15.0}, {"id": 208, "nome": "WODKA SKYY LT.1", "unita": "cl", "costo": 0.012}, {"id": 209, "nome": "WRUSTEL PURO SUINO", "unita": "gr", "costo": 5.98}, {"id": 210, "nome": "zucchero", "unita": "gr", "costo": 2.96}, {"id": 211, "nome": "zucchine", "unita": "gr", "costo": 2.3}, {"id": 212, "nome": "wurstel", "unita": "gr", "costo": 5.98}, {"id": 213, "nome": "uovo", "unita": "pezzi", "costo": 0.16}, {"id": 214, "nome": "crema nduja", "unita": "gr", "costo": 11.7}, {"id": 215, "nome": "peperoncino", "unita": "gr", "costo": 16.61}, {"id": 216, "nome": "stracciatella fresca", "unita": "gr", "costo": 2.2}, {"id": 217, "nome": "pere", "unita": "gr", "costo": 4.5}, {"id": 218, "nome": "basilico", "unita": "gr", "costo": 3.03}, {"id": 219, "nome": "rosmarino", "unita": "pezzi", "costo": 0.3}, {"id": 220, "nome": "salsa porcini", "unita": "gr", "costo": 6.0}, {"id": 221, "nome": "crema", "unita": "gr", "costo": 4.5}, {"id": 222, "nome": "SALSA CHEDDAR", "unita": "gr", "costo": 12.0}, {"id": 223, "nome": "KETCUP RIGHETTI", "unita": "gr", "costo": 12.2}, {"id": 224, "nome": "scamorza affumicato", "unita": "gr", "costo": 13.0}, {"id": 225, "nome": "salsa tonnata", "unita": "gr", "costo": 20.0}, {"id": 226, "nome": "verdure", "unita": "pezzi", "costo": 0.16}, {"id": 227, "nome": "maionese", "unita": "gr", "costo": 2.8}, {"id": 228, "nome": "torta", "unita": "gr", "costo": 7.29}, {"id": 229, "nome": "pomodori verdi", "unita": "gr", "costo": 7.0}, {"id": 230, "nome": "salsa barbe", "unita": "gr", "costo": 11.66}, {"id": 231, "nome": "ragu", "unita": "gr", "costo": 3.5}, {"id": 232, "nome": "sottile4tta", "unita": "gr", "costo": 5.67}, {"id": 233, "nome": "cetrioli", "unita": "gr", "costo": 2.6}, {"id": 234, "nome": "salsa rosa", "unita": "gr", "costo": 6.0}, {"id": 235, "nome": "pomodoro verdi", "unita": "gr", "costo": 2.5}, {"id": 236, "nome": "pesto", "unita": "gr", "costo": 4.5}, {"id": 237, "nome": "zenzero", "unita": "gr", "costo": 5.98}, {"id": 238, "nome": "sottiletta", "unita": "gr", "costo": 5.67}, {"id": 239, "nome": "crauti", "unita": "gr", "costo": 4.5}, {"id": 240, "nome": "crema mais", "unita": "gr", "costo": 12.0}, {"id": 241, "nome": "emmental", "unita": "gr", "costo": 15.0}, {"id": 242, "nome": "cipolle fritte", "unita": "gr", "costo": 4.1}, {"id": 243, "nome": "TORTA AL TESTO", "unita": "pezzi", "costo": 0.26}, {"id": 244, "nome": "erba cotta", "unita": "gr", "costo": 15.0}, {"id": 245, "nome": "OLIVE ASCOLANE", "unita": "pezzi", "costo": 0.08}, {"id": 246, "nome": "polpette manzo", "unita": "pezzi", "costo": 0.63}, {"id": 247, "nome": "corn hog", "unita": "gr", "costo": 2.5}, {"id": 248, "nome": "SPRITE", "unita": "pezzi", "costo": 0.9}, {"id": 249, "nome": "biscotti secchi", "unita": "gr", "costo": 3.03}, {"id": 250, "nome": "caffe", "unita": "gr", "costo": 12.1}, {"id": 251, "nome": "farina", "unita": "pezzi", "costo": 0.98}, {"id": 252, "nome": "SAVIGNON 0,75", "unita": "pezzi", "costo": 4.35}, {"id": 253, "nome": "coca cola", "unita": "pezzi", "costo": 0.76}, {"id": 254, "nome": "sale", "unita": "gr", "costo": 9.152}];
 
@@ -331,8 +408,8 @@
         });
 
         async function initDatabase() {
-            const localMP = localStorage.getItem('fcm_mp_2026_v7');
-            const localPizze = localStorage.getItem('fcm_pizze_2026_v7');
+            const localMP = localStorage.getItem('fcm_mp_2026_v10');
+            const localPizze = localStorage.getItem('fcm_pizze_2026_v10');
 
             if (localMP && localPizze) {
                 materiePrime = JSON.parse(localMP);
@@ -352,15 +429,15 @@
         }
 
         function saveData() {
-            localStorage.setItem('fcm_mp_2026_v7', JSON.stringify(materiePrime));
-            localStorage.setItem('fcm_pizze_2026_v7', JSON.stringify(pizze));
+            localStorage.setItem('fcm_mp_2026_v10', JSON.stringify(materiePrime));
+            localStorage.setItem('fcm_pizze_2026_v10', JSON.stringify(pizze));
             renderAll();
         }
 
         function resetToExcelData() {
             Swal.fire({
                 title: 'Ripristinare il database?',
-                text: "Tutti i 158 prodotti e 254 materie prime verranno resettati ai dati originali!",
+                text: "Tutti i dati verranno reimpostati ai valori iniziali!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
@@ -369,51 +446,31 @@
                 cancelButtonText: 'Annulla'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    localStorage.removeItem('fcm_mp_2026_v7');
-                    localStorage.removeItem('fcm_pizze_2026_v7');
+                    localStorage.removeItem('fcm_mp_2026_v10');
+                    localStorage.removeItem('fcm_pizze_2026_v10');
                     location.reload();
                 }
             });
         }
 
-        // Importazione Excel diretta via SheetJS
-        function importaFileExcel(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet);
-                    
-                    if (json.length > 0) {
-                        Swal.fire('Successo', `File Excel caricato con successo (${json.length} righe rilevate).`, 'success');
-                    }
-                } catch(err) {
-                    Swal.fire('Errore', 'Impossibile leggere il file Excel.', 'error');
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
         function toggleDrawer() {
-            document.getElementById('drawer-menu').classList.toggle('hidden');
+            const drawer = document.getElementById('drawer-menu');
+            drawer.classList.toggle('hidden');
         }
 
         function switchTab(tabName) {
-            ['dashboard', 'pizze', 'materie-prime', 'menu-engineering', 'ai-advisor'].forEach(t => {
-                document.getElementById(`sec-${t}`).classList.add('hidden');
+            ['dashboard', 'pizze', 'materie-prime', 'menu-engineering', 'simulator', 'ai-advisor'].forEach(t => {
+                const sec = document.getElementById(`sec-${t}`);
+                if(sec) sec.classList.add('hidden');
                 const btn = document.getElementById(`tab-${t}`);
                 if(btn) { btn.classList.remove('active-tab'); btn.classList.add('text-slate-400'); }
             });
-            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+            const targetSec = document.getElementById(`sec-${tabName}`);
+            if(targetSec) targetSec.classList.remove('hidden');
             const activeTabBtn = document.getElementById(`tab-${tabName}`);
             if(activeTabBtn) { activeTabBtn.classList.add('active-tab'); activeTabBtn.classList.remove('text-slate-400'); }
             if(tabName === 'dashboard') renderDashboard();
-            if(tabName === 'ai-advisor') renderAiAdvisor();
+            if(tabName === 'simulator') eseguiSimulazione();
         }
 
         function switchTabMobile(tabName) {
@@ -437,30 +494,20 @@
             renderRicettaPizza();
             renderMenuEngineeringTable();
             renderDashboard();
-            renderAiAdvisor();
+            eseguiSimulazione();
         }
 
-        // Tabella Materie Prime con confronto mercato istantaneo
         function renderMateriePrimeTable() {
             const tbody = document.getElementById('tbl-materie-prime-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
             materiePrime.forEach(mp => {
-                // Stima prezzo medio supermercato/mercato (ipotizziamo un +10% o +20% di media come riferimento)
-                const prezzoMercato = mp.costo * 1.15;
-                const diff = mp.costo - prezzoMercato;
-                let badge = `<span class="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-400">Ottimo (€ ${(prezzoMercato).toFixed(2)})</span>`;
-                if (mp.costo > prezzoMercato * 1.1) {
-                    badge = `<span class="px-2 py-0.5 rounded text-xs bg-rose-500/20 text-rose-400">Sopra media</span>`;
-                }
-
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-800/50";
                 tr.innerHTML = `
                     <td class="p-3 font-semibold text-white">${mp.nome}</td>
                     <td class="p-3 text-slate-400">${mp.unita}</td>
-                    <td class="p-3 font-bold text-emerald-400">€ ${mp.costo.toFixed(4)}</td>
-                    <td class="p-3 text-slate-300">€ ${prezzoMercato.toFixed(4)}</td>
-                    <td class="p-3">${badge}</td>
+                    <td class="p-3 font-bold text-emerald-400">€ ${mp.costo.toFixed(4)} / ${mp.unita}</td>
                     <td class="p-3 text-center space-x-2">
                         <button onclick="editMateriaPrime(${mp.id})" class="touch-btn text-blue-400 p-2"><i class="fa-solid fa-pen"></i></button>
                         <button onclick="eliminaMateriaPrime(${mp.id})" class="touch-btn text-red-400 p-2"><i class="fa-solid fa-trash"></i></button>
@@ -537,11 +584,12 @@
         function renderPizzeSelect() {
             const select = document.getElementById('select-pizza');
             const selectAdd = document.getElementById('add-ingrediente-select');
+            if(!select || !selectAdd) return;
             select.innerHTML = '';
             pizze.forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.id;
-                opt.textContent = p.nome;
+                opt.textContent = `${p.nome} (${p.venditeMensili || 0} pz/m)`;
                 if (p.id === selectedPizzaId) opt.selected = true;
                 select.appendChild(opt);
             });
@@ -564,6 +612,7 @@
             const pizza = pizze.find(p => p.id === selectedPizzaId);
             const cardSummary = document.getElementById('pizza-summary-card');
             const tbody = document.getElementById('tbl-ricetta-body');
+            if(!tbody || !cardSummary) return;
             tbody.innerHTML = '';
             if (!pizza) {
                 cardSummary.classList.add('hidden');
@@ -573,9 +622,11 @@
             const costoTotale = getCostoTotalePizza(pizza);
             const margine = pizza.prezzoVendita - costoTotale;
             const fcPerc = pizza.prezzoVendita > 0 ? (costoTotale / pizza.prezzoVendita) * 100 : 0;
+            const vendite = pizza.venditeMensili || 0;
 
             document.getElementById('summary-pizza-nome').innerText = pizza.nome;
             document.getElementById('summary-pizza-prezzo').innerText = `€ ${pizza.prezzoVendita.toFixed(2)}`;
+            document.getElementById('summary-pizza-vendite').innerText = `${vendite} pz/mese`;
             document.getElementById('summary-pizza-costo').innerText = `€ ${costoTotale.toFixed(2)}`;
             document.getElementById('summary-pizza-margine').innerText = `€ ${margine.toFixed(2)}`;
             document.getElementById('summary-pizza-fc').innerText = `${fcPerc.toFixed(1)}%`;
@@ -632,16 +683,92 @@
             const pizza = pizze.find(p => p.id === selectedPizzaId);
             if (!pizza) return;
             Swal.fire({
-                title: `Prezzo di Vendita: ${pizza.nome}`,
+                title: `Prezzo Vendita: ${pizza.nome}`,
                 input: 'number',
                 inputValue: pizza.prezzoVendita,
                 inputAttributes: { step: '0.50' },
                 showCancelButton: true,
-                confirmButtonText: 'Salva Prezzo'
+                confirmButtonText: 'Salva'
             }).then((result) => {
                 if (result.isConfirmed && result.value) {
                     pizza.prezzoVendita = parseFloat(result.value);
                     saveData();
+                }
+            });
+        }
+
+        function modalEditVenditePizza() {
+            const pizza = pizze.find(p => p.id === selectedPizzaId);
+            if (!pizza) return;
+            Swal.fire({
+                title: `Vendite Mensili: ${pizza.nome}`,
+                text: "Inserisci i pezzi venduti al mese:",
+                input: 'number',
+                inputValue: pizza.venditeMensili || 150,
+                inputAttributes: { step: '1', min: '0' },
+                showCancelButton: true,
+                confirmButtonText: 'Salva'
+            }).then((result) => {
+                if (result.isConfirmed && result.value !== '') {
+                    pizza.venditeMensili = parseInt(result.value) || 0;
+                    saveData();
+                }
+            });
+        }
+
+        // 1. IMPORTAZIONE MASSIVA REALE CON FILE UPLOAD (EXCEL/CSV)
+        function modalImportazioneMassivaVendite() {
+            Swal.fire({
+                title: 'Importazione Volumi (File o Blocco)',
+                html: `
+                    <p class="text-sm text-slate-300 mb-3">Carica un file Excel (.xlsx) o CSV con colonne: <b>NomeProdotto, Quantita</b></p>
+                    <input type="file" id="swal-file-input" accept=".csv, .xlsx, .xls" class="swal2-input text-sm p-2"><br>
+                    <p class="text-xs text-slate-400 my-2">Oppure imposta un valore uguale per tutti:</p>
+                    <input id="swal-bulk-val" type="number" class="swal2-input" placeholder="es. 120">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Elabora e Salva',
+                preConfirm: () => {
+                    const fileInput = document.getElementById('swal-file-input');
+                    const bulkVal = document.getElementById('swal-bulk-val').value;
+                    return { file: fileInput.files[0], bulkVal: bulkVal ? parseInt(bulkVal) : null };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (result.value.bulkVal !== null) {
+                        pizze.forEach(p => p.venditeMensili = result.value.bulkVal);
+                        saveData();
+                        Swal.fire('Aggiornato!', 'Tutti i volumi sono stati impostati.', 'success');
+                    } else if (result.value.file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            try {
+                                const data = new Uint8Array(e.target.result);
+                                const workbook = XLSX.read(data, { type: 'array' });
+                                const firstSheetName = workbook.SheetNames[0];
+                                const worksheet = workbook.Sheets[firstSheetName];
+                                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                                
+                                let count = 0;
+                                json.forEach(row => {
+                                    if(row.length >= 2) {
+                                        const nomeProd = String(row[0]).trim().toUpperCase();
+                                        const qta = parseInt(row[1]);
+                                        const p = pizze.find(item => item.nome.toUpperCase() === nomeProd);
+                                        if(p && !isNaN(qta)) {
+                                            p.venditeMensili = qta;
+                                            count++;
+                                        }
+                                    }
+                                });
+                                saveData();
+                                Swal.fire('Importazione Riuscita', `Aggiornati ${count} prodotti con successo dal file.`, 'success');
+                            } catch(err) {
+                                Swal.fire('Errore', 'Impossibile leggere il file correttamente.', 'error');
+                            }
+                        };
+                        reader.readAsArrayBuffer(result.value.file);
+                    }
                 }
             });
         }
@@ -652,14 +779,14 @@
                 html:
                     '<input id="swal-p-nome" class="swal2-input" placeholder="Nome Prodotto">' +
                     '<input id="swal-p-prezzo" type="number" step="0.50" class="swal2-input" placeholder="Prezzo Vendita (€)">' +
-                    '<input id="swal-p-vendite" type="number" class="swal2-input" placeholder="Vendite mensili stimate">',
+                    '<input id="swal-p-vendite" type="number" class="swal2-input" placeholder="Vendite mensili (es. 150)">',
                 showCancelButton: true,
                 confirmButtonText: 'Crea',
                 preConfirm: () => {
                     return {
                         nome: document.getElementById('swal-p-nome').value,
-                        prezzoVendita: parseFloat(document.getElementById('swal-p-prezzo').value),
-                        venditeMensili: parseInt(document.getElementById('swal-p-vendite').value) || 100
+                        prezzoVendita: parseFloat(document.getElementById('swal-p-prezzo').value) || 0,
+                        venditeMensili: parseInt(document.getElementById('swal-p-vendite').value) || 150
                     }
                 }
             }).then((result) => {
@@ -692,20 +819,21 @@
         function getMatrixCategory(pizza, margineMedio, venditeMedie) {
             const costo = getCostoTotalePizza(pizza);
             const margine = pizza.prezzoVendita - costo;
-            const popolarita = pizza.venditeMensili;
-            if (margine >= margineMedio && popolarita >= venditeMedie) return { cat: "STAR", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500", cons: "Ottimo! Promuovilo al massimo." };
-            if (margine < margineMedio && popolarita >= venditeMedie) return { cat: "WORKHORSE", color: "bg-blue-500/20 text-blue-400 border-blue-500", cons: "Vola ma margine basso: alza un po' il prezzo." };
-            if (margine >= margineMedio && popolarita < venditeMedie) return { cat: "PUZZLE", color: "bg-amber-500/20 text-amber-400 border-amber-500", cons: "Alto margine: migliora la visibilità." };
-            return { cat: "DOG", color: "bg-red-500/20 text-red-400 border-red-500", cons: "Basso margine e vendite: valuta rimozione." };
+            const popolarita = pizza.venditeMensili || 0;
+            if (margine >= margineMedio && popolarita >= venditeMedie) return { cat: "STAR", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500", cons: "Ottimo! Alta popolarità e alto margine." };
+            if (margine < margineMedio && popolarita >= venditeMedie) return { cat: "WORKHORSE", color: "bg-blue-500/20 text-blue-400 border-blue-500", cons: "Vola ma margine basso: valuta lieve aumento prezzo." };
+            if (margine >= margineMedio && popolarita < venditeMedie) return { cat: "PUZZLE", color: "bg-amber-500/20 text-amber-400 border-amber-500", cons: "Margine alto ma poche vendite: migliora la promozione." };
+            return { cat: "DOG", color: "bg-red-500/20 text-red-400 border-red-500", cons: "Basso margine e vendite scarse: valuta rimozione." };
         }
 
         function renderMenuEngineeringTable() {
             const tbody = document.getElementById('tbl-engineering-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
             if (pizze.length === 0) return;
             const margineTotale = pizze.reduce((acc, p) => acc + (p.prezzoVendita - getCostoTotalePizza(p)), 0);
             const margineMedio = margineTotale / pizze.length;
-            const venditeMedie = pizze.reduce((acc, p) => acc + p.venditeMensili, 0) / pizze.length;
+            const venditeMedie = pizze.reduce((acc, p) => acc + (p.venditeMensili || 0), 0) / pizze.length;
 
             pizze.forEach(p => {
                 const costo = getCostoTotalePizza(p);
@@ -717,6 +845,7 @@
                 tr.innerHTML = `
                     <td class="p-3 font-semibold text-white">${p.nome}</td>
                     <td class="p-3">€ ${p.prezzoVendita.toFixed(2)}</td>
+                    <td class="p-3 font-bold text-amber-400">${p.venditeMensili || 0}</td>
                     <td class="p-3 text-rose-400">€ ${costo.toFixed(2)}</td>
                     <td class="p-3 text-emerald-400 font-bold">€ ${margine.toFixed(2)}</td>
                     <td class="p-3">${fcPerc.toFixed(1)}%</td>
@@ -727,72 +856,43 @@
             });
         }
 
+        // 2. DASHBOARD CON KPI FINANZIARI REALI
         function renderDashboard() {
-            document.getElementById('dash-tot-pizze').innerText = pizze.length;
             if (pizze.length === 0) return;
-            let totFC = 0, totMargine = 0, starCount = 0;
+            let totFatturato = 0;
+            let totCostoMP = 0;
+            let starCount = 0;
+            
             const margineMedio = pizze.reduce((acc, p) => acc + (p.prezzoVendita - getCostoTotalePizza(p)), 0) / pizze.length;
-            const venditeMedie = pizze.reduce((acc, p) => acc + p.venditeMensili, 0) / pizze.length;
+            const venditeMedie = pizze.reduce((acc, p) => acc + (p.venditeMensili || 0), 0) / pizze.length;
 
             pizze.forEach(p => {
-                const costo = getCostoTotalePizza(p);
-                totFC += (p.prezzoVendita > 0 ? (costo / p.prezzoVendita) * 100 : 0);
-                totMargine += (p.prezzoVendita - costo);
+                const vendite = p.venditeMensili || 0;
+                const costoUnitario = getCostoTotalePizza(p);
+                totFatturato += (p.prezzoVendita * vendite);
+                totCostoMP += (costoUnitario * vendite);
                 if(getMatrixCategory(p, margineMedio, venditeMedie).cat === 'STAR') starCount++;
             });
 
-            document.getElementById('dash-fc-medio').innerText = `${(totFC / pizze.length).toFixed(1)}%`;
-            document.getElementById('dash-margine-medio').innerText = `€ ${(totMargine / pizze.length).toFixed(2)}`;
-            document.getElementById('dash-star-count').innerText = starCount;
+            const totProfitto = totFatturato - totCostoMP;
+            const fcPonderato = totFatturato > 0 ? (totCostoMP / totFatturato) * 100 : 0;
+
+            document.getElementById('dash-tot-fatturato').innerText = `€ ${totFatturato.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('dash-tot-costo-mp').innerText = `€ ${totCostoMP.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('dash-tot-profitto').innerText = `€ ${totProfitto.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('dash-fc-ponderato').innerText = `${fcPonderato.toFixed(1)}%`;
 
             renderCharts(margineMedio, venditeMedie);
         }
 
-        // Logica Intelligenza Artificiale / Advisor
-        function renderAiAdvisor() {
-            if (pizze.length === 0) return;
-            let critici = 0;
-            let margineTot = 0;
-            pizze.forEach(p => {
-                const costo = getCostoTotalePizza(p);
-                const fc = p.prezzoVendita > 0 ? (costo / p.prezzoVendita) * 100 : 0;
-                if (fc > 35) critici++;
-                margineTot += (p.prezzoVendita - costo) * p.venditeMensili;
-            });
-
-            document.getElementById('ai-critici-count').innerText = critici;
-            document.getElementById('ai-margine-ottimale').innerText = `€ ${margineTot.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
-            const listContainer = document.getElementById('ai-recommendations-list');
-            listContainer.innerHTML = '';
-
-            const recs = [
-                { icon: 'fa-triangle-exclamation text-amber-400', title: 'Monitoraggio Food Cost', text: `Rilevati ${critici} prodotti con Food Cost superiore al 35%. Ti consigliamo di ritoccare il prezzo di vendita di questi articoli di almeno 0.50€.` },
-                { icon: 'fa-arrow-trend-up text-emerald-400', title: 'Ottimizzazione Fornitori', text: 'Alcune materie prime superano la media di mercato del 10%. Valuta l’acquisto in blocco o un gruppo d’acquisto per ridurre i costi fissi.' },
-                { icon: 'fa-star text-amber-300', title: 'Spinta Prodotti STAR', text: 'I prodotti classificati come STAR garantiscono il miglior ritorno economico. Posizionali in alto nel menu digitale o cartaceo.' }
-            ];
-
-            recs.forEach(r => {
-                const div = document.createElement('div');
-                div.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-start space-x-3";
-                div.innerHTML = `
-                    <div class="text-xl mt-0.5"><i class="fa-solid ${r.icon}"></i></div>
-                    <div>
-                        <h4 class="font-bold text-white text-sm">${r.title}</h4>
-                        <p class="text-xs text-slate-300 mt-1">${r.text}</p>
-                    </div>
-                `;
-                listContainer.appendChild(div);
-            });
-        }
-
         function renderCharts(margineMedio, venditeMedie) {
-            const ctx1 = document.getElementById('chartMatrix').getContext('2d');
+            const ctx1 = document.getElementById('chartMatrix');
+            if(!ctx1) return;
             if (chartMatrixInstance) chartMatrixInstance.destroy();
             const catCount = { STAR: 0, WORKHORSE: 0, PUZZLE: 0, DOG: 0 };
             pizze.forEach(p => { catCount[getMatrixCategory(p, margineMedio, venditeMedie).cat]++; });
 
-            chartMatrixInstance = new Chart(ctx1, {
+            chartMatrixInstance = new Chart(ctx1.getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: ['STAR', 'WORKHORSE', 'PUZZLE', 'DOG'],
@@ -801,11 +901,12 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { stepSize: 1, color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
             });
 
-            const ctx2 = document.getElementById('chartFoodCost').getContext('2d');
+            const ctx2 = document.getElementById('chartFoodCost');
+            if(!ctx2) return;
             if (chartFCInstance) chartFCInstance.destroy();
             const sorted = [...pizze].sort((a,b) => getCostoTotalePizza(b) - getCostoTotalePizza(a)).slice(0, 5);
 
-            chartFCInstance = new Chart(ctx2, {
+            chartFCInstance = new Chart(ctx2.getContext('2d'), {
                 type: 'doughnut',
                 data: {
                     labels: sorted.map(p => p.nome),
@@ -813,6 +914,105 @@
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } } }
             });
+        }
+
+        // 3. SIMULATORE WHAT-IF LOGICA
+        function eseguiSimulazione() {
+            const rangePrezzo = document.getElementById('sim-prezzo-range');
+            const rangeMP = document.getElementById('sim-mp-range');
+            if(!rangePrezzo || !rangeMP) return;
+
+            const varPrezzo = parseFloat(rangePrezzo.value);
+            const varMP = parseFloat(rangeMP.value);
+
+            document.getElementById('sim-prezzo-val').innerText = (varPrezzo > 0 ? '+' : '') + varPrezzo + '%';
+            document.getElementById('sim-mp-val').innerText = (varMP > 0 ? '+' : '') + varMP + '%';
+
+            let baseFatturato = 0;
+            let baseCosto = 0;
+            let simFatturato = 0;
+            let simCosto = 0;
+
+            pizze.forEach(p => {
+                const vendite = p.venditeMensili || 0;
+                const pBase = p.prezzoVendita;
+                const cBase = getCostoTotalePizza(p);
+
+                baseFatturato += (pBase * vendite);
+                baseCosto += (cBase * vendite);
+
+                const pSim = pBase * (1 + varPrezzo / 100);
+                const cSim = cBase * (1 + varMP / 100);
+
+                simFatturato += (pSim * vendite);
+                simCosto += (cSim * vendite);
+            });
+
+            const baseProfitto = baseFatturato - baseCosto;
+            const simProfitto = simFatturato - simCosto;
+
+            document.getElementById('sim-res-fatturato').innerText = `€ ${simFatturato.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('sim-res-costo').innerText = `€ ${simCosto.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('sim-res-profitto').innerText = `€ ${simProfitto.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            const diffFatt = simFatturato - baseFatturato;
+            const diffCosto = simCosto - baseCosto;
+            const diffProf = simProfitto - baseProfitto;
+
+            document.getElementById('sim-diff-fatturato').innerHTML = `Var: <span class="${diffFatt >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${diffFatt >= 0 ? '+' : ''}€ ${diffFatt.toFixed(2)}</span>`;
+            document.getElementById('sim-diff-costo').innerHTML = `Var: <span class="${diffCosto <= 0 ? 'text-emerald-400' : 'text-rose-400'}">${diffCosto >= 0 ? '+' : ''}€ ${diffCosto.toFixed(2)}</span>`;
+            document.getElementById('sim-diff-profitto').innerHTML = `Var: <span class="${diffProf >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${diffProf >= 0 ? '+' : ''}€ ${diffProf.toFixed(2)}</span>`;
+        }
+
+        // 4. AI ADVISOR POTENZIATO CON LISTA SPESA
+        function generaConsigliAI() {
+            const container = document.getElementById('ai-output-container');
+            const content = document.getElementById('ai-report-content');
+            if(!container || !content) return;
+            container.classList.remove('hidden');
+            content.innerHTML = '<p class="text-amber-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Elaborazione avanzata dei volumi di vendita e calcolo del fabbisogno acquisti...</p>';
+
+            setTimeout(() => {
+                const margineTotale = pizze.reduce((acc, p) => acc + (p.prezzoVendita - getCostoTotalePizza(p)), 0);
+                const margineMedio = margineTotale / pizze.length;
+                const venditeMedie = pizze.reduce((acc, p) => acc + (p.venditeMensili || 0), 0) / pizze.length;
+
+                let stars = [], dogs = [], highFc = [];
+                let fabbisognoMp = {};
+
+                pizze.forEach(p => {
+                    const costo = getCostoTotalePizza(p);
+                    const fc = p.prezzoVendita > 0 ? (costo / p.prezzoVendita) * 100 : 0;
+                    const cat = getMatrixCategory(p, margineMedio, venditeMedie).cat;
+                    if(cat === 'STAR') stars.push(p.nome);
+                    if(cat === 'DOG') dogs.push(p.nome);
+                    if(fc > 35) highFc.push(`${p.nome} (${fc.toFixed(1)}%)`);
+
+                    // Calcolo fabbisogno materie prime mensile
+                    const vendite = p.venditeMensili || 0;
+                    p.ingredienti.forEach(ing => {
+                        if(!fabbisognoMp[ing.mpId]) fabbisognoMp[ing.mpId] = 0;
+                        fabbisognoMp[ing.mpId] += (ing.qta * vendite);
+                    });
+                });
+
+                // Top 5 ingredienti più richiesti
+                let topMpList = Object.entries(fabbisognoMp)
+                    .sort((a,b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(([mpId, qta]) => {
+                        const mp = materiePrime.find(m => m.id == mpId);
+                        return mp ? `<li><b>${mp.nome}</b>: stimati ~${qta.toFixed(1)} ${mp.unita}</li>` : '';
+                    }).join('');
+
+                content.innerHTML = `
+                    <p><strong class="text-orange-400">Analisi Globale del Menù:</strong> Esaminati ${pizze.length} prodotti con volumi complessivi stimati. Il Food Cost ponderato è ottimizzato per sostenere il margine operativo.</p>
+                    <p><strong class="text-emerald-400">Prodotti STAR (Core Business):</strong> ${stars.slice(0, 5).join(', ')}... <br><em>Consiglio AI:</em> Promuovili in evidenza; sono i driver principali del profitto lordo.</p>
+                    <p><strong class="text-rose-400">Allerta Food Cost (&gt; 35%):</strong> ${highFc.length > 0 ? highFc.slice(0, 5).join(', ') : 'Nessuna criticità rilevata'}. <br><em>Consiglio AI:</em> Rivedi i dosaggi o rinegozia i listini con i fornitori per questi specifici piatti.</p>
+                    <p><strong class="text-amber-400">Stima Fabbisogno Materie Prime (Top 5 per Volume):</strong></p>
+                    <ul class="list-disc pl-5 text-slate-200 space-y-1">${topMpList}</ul>
+                `;
+            }, 800);
         }
     </script>
 </body>
